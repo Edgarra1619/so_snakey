@@ -1,6 +1,8 @@
 #include "ft_header.h"
 #include <stdlib.h>
 #include <ncurses.h>
+#include <termios.h>
+#include <unistd.h>
 
 int	insert_snakepart(t_snakelist **pos)
 {
@@ -35,6 +37,14 @@ void	free_game(t_game *game)
 
 t_game*	start_game(t_game *game)
 {
+	
+	struct termios info;
+	tcgetattr(0, &info);
+	info.c_lflag &= ~ICANON;
+	info.c_cc[VMIN] = 0;
+	info.c_cc[VTIME] = 0;
+	tcsetattr(0, TCSANOW, &info);
+	
 	int	i;
 	
 	if(game)
@@ -44,7 +54,7 @@ t_game*	start_game(t_game *game)
 		return (NULL);
 	game->score = 0;
 	game->snake_head = NULL;
-	game->apple[0] = game->apple[0] % COLS;
+	game->apple[0] = game->apple[0] % (COLS/2);
 	game->apple[1] = game->apple[1] % LINES;
 	game->previous_tail[0] = 0;
 	game->previous_tail[1] = 0;
@@ -57,7 +67,7 @@ t_game*	start_game(t_game *game)
 			free(game);
 			return (NULL);
 		}
-		game->snake_head->position[0] = COLS / 2;
+		game->snake_head->position[0] = (COLS/2) / 2;
 		game->snake_head->position[1] = LINES / 2 - i;
 		if (i == 1)
 			game->snake_tail = game->snake_head;
@@ -69,14 +79,31 @@ t_game*	start_game(t_game *game)
 int	update_game(t_game *game)
 {
 	int	next_pos[2];
+	char	c = 0;
+	read(0, &c, 1);
+	switch(c)
+	{
+		case 'a':
+			game->dir = 0;
+			break;
+		case 'd':
+			game->dir = 1;
+			break;
+		case 'w':
+			game->dir = 2;
+			break;
+		case 's':
+			game->dir = 3;
+			break;
+	}
 
 	// TODO check some input
 	next_pos[0] = game->snake_head->position[0];
 	next_pos[1] = game->snake_head->position[1];
 	if(game->dir & 0b01)
-		next_pos[game->dir & 0b010] += 1;
+		next_pos[(game->dir & 0b010) && 1] += 1;
 	else
-		next_pos[game->dir & 0b010] -= 1;
+		next_pos[(game->dir & 0b010) && 1] -= 1;
 
 
 	if (	   next_pos[0] == game->apple[0]
@@ -86,6 +113,8 @@ int	update_game(t_game *game)
 			return (0);
 		game->snake_head->position[0] = next_pos[0];
 		game->snake_head->position[1] = next_pos[1];
+		game->apple[0] = rand() % (COLS/2);
+		game->apple[1] = rand() % LINES;
 	}
 	else
 	{

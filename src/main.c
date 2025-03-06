@@ -16,7 +16,7 @@ int	main(int argc, char **argv)
 	wind = initscr();
 	if(!wind)
 		goto clean;
-	//start_color();
+	start_color();
 	cbreak();
 	curs_set(0);
 	noecho();
