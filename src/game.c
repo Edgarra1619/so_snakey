@@ -1,6 +1,8 @@
 #include "ft_header.h"
+#include <time.h>
 #include <stdlib.h>
 #include <ncurses.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -37,25 +39,26 @@ void	free_game(t_game *game)
 
 t_game*	start_game(t_game *game)
 {
-	
+
 	struct termios info;
 	tcgetattr(0, &info);
 	info.c_lflag &= ~ICANON;
 	info.c_cc[VMIN] = 0;
 	info.c_cc[VTIME] = 0;
-	tcsetattr(0, TCSANOW, &info);
-	
+	tcsetattr(0, TCSANOW, &info);	
 	int	i;
-	
+
+	clear();
 	if(game)
 		free_game(game);
 	game = malloc(sizeof(*game));
 	if(!game)
 		return (NULL);
+	srand(time(NULL));
 	game->score = 0;
 	game->snake_head = NULL;
-	game->apple[0] = game->apple[0] % (COLS/2);
-	game->apple[1] = game->apple[1] % LINES;
+	game->apple[0] = rand() % (COLS/2);
+	game->apple[1] = rand() % LINES;
 	game->previous_tail[0] = 0;
 	game->previous_tail[1] = 0;
 	game->snake_tail = 0;
@@ -76,41 +79,57 @@ t_game*	start_game(t_game *game)
 	return (game);
 }
 
-int	update_game(t_game *game)
+t_game	*update_game(t_game *game)
 {
 	int	next_pos[2];
 	char	c = 0;
-	read(0, &c, 1);
+
+	while(read(0, &c, 1));
 	switch(c)
 	{
 		case 'a':
-			game->dir = 0;
+			if (game->dir & 2)
+				game->dir = 0;
 			break;
 		case 'd':
-			game->dir = 1;
+			if (game->dir & 2)
+				game->dir = 1;
 			break;
 		case 'w':
-			game->dir = 2;
+			if (!(game->dir & 2))
+				game->dir = 2;
 			break;
 		case 's':
-			game->dir = 3;
+			if (!(game->dir & 2))
+				game->dir = 3;
 			break;
+		case 'q':
+			free_game(game);
+			return (NULL);
 	}
-
-	// TODO check some input
 	next_pos[0] = game->snake_head->position[0];
 	next_pos[1] = game->snake_head->position[1];
-	if(game->dir & 0b01)
-		next_pos[(game->dir & 0b010) && 1] += 1;
+	if(game->dir & 1)
+		next_pos[(game->dir & 2) && 1] += 1;
 	else
-		next_pos[(game->dir & 0b010) && 1] -= 1;
+		next_pos[(game->dir & 2) && 1] -= 1;
+	next_pos[0] %= COLS/2;
+	next_pos[1] %= LINES;
+	if(next_pos[0] < 0)
+		next_pos[0] += COLS/2;
+	if(next_pos[1] < 0)
+		next_pos[1] += LINES;
 
-
+	if((mvinch(next_pos[1], next_pos[0] * 2) & A_CHARTEXT) == 's')
+		return (start_game(game));
 	if (	   next_pos[0] == game->apple[0]
 		&& next_pos[1] == game->apple[1])
 	{
 		if(!insert_snakepart(&game->snake_head))
-			return (0);
+		{
+			free_game(game);
+			return (NULL);
+		}
 		game->snake_head->position[0] = next_pos[0];
 		game->snake_head->position[1] = next_pos[1];
 		game->apple[0] = rand() % (COLS/2);
@@ -129,6 +148,6 @@ int	update_game(t_game *game)
 		game->snake_tail = game->snake_head->previous;
 		game->snake_head->previous = NULL;
 	}
-	return (1);
+	return (game);
 }
 

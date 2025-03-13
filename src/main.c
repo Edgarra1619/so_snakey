@@ -1,15 +1,15 @@
 #include "ft_header.h"
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <time.h>
 
 
-int	main(int argc, char **argv)
+int	main(void)
 {
 	t_game *game;
 	WINDOW *wind;
-	int	count;
 	const struct timespec duration = {0, 100000000};
 
 	game = NULL;
@@ -23,13 +23,9 @@ int	main(int argc, char **argv)
 	game = start_game(NULL);
 	if(!game)
 		goto clean;
-
-	if(argc > 1)
-		count = 10 * atoi(argv[1]);
-	else
-		count = 10 * 10;
-	while(count--){
-		if(!update_game(game))
+	while(1){
+		game = update_game(game);
+		if(!game)
 			goto clean;
 		render_game(game);
 		nanosleep(&duration,  NULL);

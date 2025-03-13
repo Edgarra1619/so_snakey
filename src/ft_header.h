@@ -21,7 +21,7 @@ typedef struct s_game
 
 t_game *start_game(t_game *game);
 void	render_game(t_game *game);
-int	update_game(t_game *game);
+t_game	*update_game(t_game *game);
 void	free_game(t_game *game);
 
 

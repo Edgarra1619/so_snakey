@@ -29,8 +29,8 @@ void	render_game(t_game *game)
 		return ;
 	}
 	put_fillchar(game->snake_head->position[0], 
-	      game->snake_head->position[1], ' ', snake_color);
+	      game->snake_head->position[1], 's', snake_color);
 	put_fillchar(game->previous_tail[0], game->previous_tail[1],' ', 0);
-	put_fillchar(game->apple[0], game->apple[1], ' ', apple_color);
+	put_fillchar(game->apple[0], game->apple[1], 'a', apple_color);
 	refresh();
 }
